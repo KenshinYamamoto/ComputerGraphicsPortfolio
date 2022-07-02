@@ -1,0 +1,737 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+  </head>
+<body>
+  <h1>第5回目レポート</h1>
+  <h2>タイトル:大通り</h2>
+  <p>
+    車を走らせ、街灯をスポットライト光源で表現した。車道、歩道、木はテクスチャを反映して表現した。<br>
+    車の色は実行ごとにランダムに変化するようにプログラムを組んでいる。<br>
+    また、薄暗い空という想定で薄暗い背景に設定し、車にはヘッドライトを付けている。
+  </p>
+
+ <script>
+         // ページの読み込みを待つ
+         window.addEventListener('DOMContentLoaded', init);
+
+function init() {
+  // サイズを指定
+  const width = 800
+  const height = 600;
+
+  // レンダラーを作成
+  var renderer = new THREE.WebGLRenderer();
+  document.body.appendChild(renderer.domElement);
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.setClearColor(0x303030);
+
+  // シーンを作成
+  const scene = new THREE.Scene();
+
+  // カメラを作成
+  const camera = new THREE.PerspectiveCamera(45, width / height);
+  // カメラの初期座標を設定
+  camera.position.set(0, 0, 5);
+
+  // カメラコントローラーを作成
+  const controls = new THREE.OrbitControls(camera, document.body); 
+  
+  // 平行光源1
+  var directionalLight1 = new THREE.DirectionalLight(0xffffff,1);
+  directionalLight1.position.set(5, 10, 20);
+  directionalLight1.castShadow = true;
+  directionalLight1.shadow.camera.left = -30;
+  directionalLight1.shadow.camera.right = 30;
+  directionalLight1.shadow.camera.top = 50;
+  directionalLight1.shadow.camera.buttom = -50;
+  scene.add(directionalLight1);
+
+  var CameraHelper = new THREE.CameraHelper(directionalLight1.shadow.camera);
+  //scene.add(CameraHelper);
+
+  // テクスチャー読み込み
+  var textureLoader = new THREE.TextureLoader();
+  var roadTexture = textureLoader.load("road.jpg");
+  var sidewalkTexture = textureLoader.load("sidewalk.jpg");
+  var tree0Texture = textureLoader.load("tree0.png");
+  var roadMat = new THREE.MeshStandardMaterial();
+  var sidewalkMat = new THREE.MeshStandardMaterial();
+  var tree0Material = new THREE.SpriteMaterial({transparent: true});
+  roadMat.map = roadTexture;
+  sidewalkMat.map = sidewalkTexture;
+  tree0Material.map = tree0Texture;
+
+  // グループを作成
+  const streetLightGroup = new THREE.Group();
+  const baseStreetLightGroup = new THREE.Group();
+  const roadGroup = new THREE.Group();
+  const car1 = new THREE.Group();
+  const car2 = new THREE.Group();
+  const car3 = new THREE.Group();
+  const car4 = new THREE.Group();
+  streetLightGroup.position.set(0,0,0);
+  baseStreetLightGroup.position.set(0,0,0);
+  roadGroup.position.set(0,0,0);
+  car1.position.set(0,0,0);
+  car2.position.set(0,0,0);
+  car3.position.set(0,0,0);
+  car4.position.set(0,0,0);
+
+  // 街灯を作成
+  for(var i = 1;i < 7;i++){
+      var streetLightGeometry = new THREE.CylinderGeometry( 0.1, 0.1, 10, 32 );
+      var streetLightMaterial = new THREE.MeshStandardMaterial( {color: 0xffffff} );
+      var streetLight = new THREE.Mesh( streetLightGeometry, streetLightMaterial );
+      streetLight.castShadow = true;
+      streetLight.position.set(4.75,3,-i*16);
+      baseStreetLightGroup.add( streetLight );
+
+      var sphereGeometry = new THREE.SphereGeometry(0.5,32,32);
+      var sphere = new THREE.Mesh(sphereGeometry,streetLightMaterial);
+      sphere.scale.set(1,0.1,0.5);
+      sphere.position.set(4.4,8,-i*16);
+      sphere.castShadow = true;
+      baseStreetLightGroup.add(sphere);
+
+      var spotLight = new THREE.SpotLight(0xFFFFFF, 5, 7, Math.PI, 10, 0.5);
+      spotLight.position.set(4.4,3.5,-i*16);
+      spotLight.castShadow = true;
+      streetLightGroup.add(spotLight);
+
+      var streetLight1 = new THREE.Mesh( streetLightGeometry, streetLightMaterial );
+      streetLight1.position.set(-4.75,3,7.5-i*16);
+      streetLight1.castShadow = true;
+      baseStreetLightGroup.add( streetLight1 );
+
+      var sphere1 = new THREE.Mesh(sphereGeometry,streetLightMaterial);
+      sphere1.scale.set(1,0.1,0.5);
+      sphere1.position.set(-4.4,8,7.5-i*16);
+      sphere1.castShadow = true;
+      baseStreetLightGroup.add(sphere1);
+
+      var spotLight1 = new THREE.SpotLight(0xFFFFFF, 5, 7, Math.PI, 10, 0.5);
+      spotLight1.position.set(-4.4,3.5,7.5-i*16);
+      spotLight1.castShadow = true;
+      streetLightGroup.add(spotLight1);
+  }
+
+  // 道を作成
+  for(var i = 0;i < 10;i++){
+      var planeGeometry = new THREE.PlaneGeometry(10,10);
+      var plane = new THREE.Mesh(planeGeometry,roadMat);
+      plane.rotation.set(-Math.PI/2,0,0);
+      plane.position.set(0,-1.5,-i*10);
+      plane.receiveShadow = true;
+      roadGroup.add(plane);
+
+      var sidewalkGeometry = new THREE.PlaneGeometry(5,10);
+      var sidewalk = new THREE.Mesh(sidewalkGeometry,sidewalkMat);
+      sidewalk.rotation.set(-Math.PI/2,0,0);
+      sidewalk.position.set(7.5,-1.5,-i*10);
+      sidewalk.receiveShadow = true;
+      scene.add(sidewalk);
+
+      var sidewalk1 = new THREE.Mesh(sidewalkGeometry,sidewalkMat);
+      sidewalk1.rotation.set(-Math.PI/2,0,0);
+      sidewalk1.position.set(-7.5,-1.5,-i*10);
+      sidewalk1.receiveShadow = true;
+      scene.add(sidewalk1);
+
+      const tree0 = new THREE.Sprite(tree0Material);
+      tree0.scale.set(10,10,10);
+      tree0.position.set(7,3,-i*10);
+      tree0.castShadow = true;
+      tree0.receiveShadow = true;
+      scene.add(tree0);
+
+      const tree1 = new THREE.Sprite(tree0Material);
+      tree1.scale.set(10,10,10);
+      tree1.position.set(-7,3,-5-i*10);
+      tree1.castShadow = true;
+      tree1.receiveShadow = true;
+      scene.add(tree1);
+  }
+
+  // 車を作成
+  var carColorRed = Math.floor(Math.random() * 255);
+  var carColorGreen = Math.floor(Math.random() * 255);
+  var carColorBlue = Math.floor(Math.random() * 255);
+  var carColor = carColorRed.toString(16) + carColorGreen.toString(16) + carColorBlue.toString(16);
+  var carUnderBodyGeometry = new THREE.BoxGeometry(1,1,1);
+  var carUnderBodyMaterial = new THREE.MeshPhongMaterial();
+  var carUnderBody = new THREE.Mesh(carUnderBodyGeometry,carUnderBodyMaterial);
+  carUnderBody.material.color.setStyle("#"+carColor);
+  carUnderBody.position.set(-2.2,0,0);
+  carUnderBody.scale.set(3,1.3,5);
+  carUnderBody.castShadow = true;
+  carUnderBody.receiveShadow = true;
+  car1.add(carUnderBody);
+
+  var carUpperBody = new THREE.Mesh(carUnderBodyGeometry,carUnderBodyMaterial);
+  carUpperBody.position.set(-2.2,1.3,0);
+  carUpperBody.scale.set(3,1.3,2.5);
+  carUpperBody.castShadow = true;
+  carUpperBody.receiveShadow = true;
+  car1.add(carUpperBody);
+
+  var carWindowGeometry = new THREE.BoxGeometry(1,1,1);
+  var carWindowMaterial = new THREE.MeshPhongMaterial({color:0x00ffff});
+  var carWindow1 = new THREE.Mesh(carWindowGeometry,carWindowMaterial);
+  carWindow1.position.set(-2.2,1.3,0);
+  carWindow1.scale.set(3.1,1,2.3);
+  carWindow1.castShadow = true;
+  carWindow1.receiveShadow = true;
+  car1.add(carWindow1);
+
+  var carWindow2 = new THREE.Mesh(carWindowGeometry,carWindowMaterial);
+  carWindow2.position.set(-2.2,1.3,0);
+  carWindow2.scale.set(2.9,1,2.6);
+  carWindow2.castShadow = true;
+  carWindow2.receiveShadow = true;
+  car1.add(carWindow2);
+
+  var carBackLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var carBackLight1Material = new THREE.MeshPhongMaterial({color:0xff0000});
+  var carBackLight1 = new THREE.Mesh(carBackLight1Geometry,carBackLight1Material);
+  carBackLight1.position.set(-1.2,0,2.3);
+  carBackLight1.scale.set(0.7,0.5,0.5);
+  carBackLight1.castShadow = true;
+  carBackLight1.receiveShadow = true;
+  car1.add(carBackLight1);
+  
+  var carBackLight2 = new THREE.Mesh(carBackLight1Geometry,carBackLight1Material);
+  carBackLight2.position.set(-3.2,0,2.3);
+  carBackLight2.scale.set(0.7,0.5,0.5);
+  carBackLight2.castShadow = true;
+  carBackLight2.receiveShadow = true;
+  car1.add(carBackLight2);
+  
+  var carFrontLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var carFrontLight1Material = new THREE.MeshPhongMaterial({color:0xff8000});
+  var carFrontLight1 = new THREE.Mesh(carFrontLight1Geometry,carFrontLight1Material);
+  carFrontLight1.position.set(-3.2,0,-2.3);
+  carFrontLight1.scale.set(0.7,0.5,0.5);
+  carFrontLight1.castShadow = true;
+  carFrontLight1.receiveShadow = true;
+  car1.add(carFrontLight1);
+
+  var carFrontLight2 = new THREE.Mesh(carFrontLight1Geometry,carFrontLight1Material);
+  carFrontLight2.position.set(-1.2,0,-2.3);
+  carFrontLight2.scale.set(0.7,0.5,0.5);
+  carFrontLight2.castShadow = true;
+  carFrontLight2.receiveShadow = true;
+  car1.add(carFrontLight2);
+
+  var carLight1 = new THREE.PointLight(0xffffff,10,2,1.0);
+  carLight1.position.set(-3.2,0,-4);
+  carLight1.rotation.set(Math.PI/4,0,0);
+  car1.add(carLight1);
+
+  var carLight2 = new THREE.PointLight(0xffffff,10,2,1.0);
+  carLight2.position.set(-1.2,0,-4);
+  carLight2.rotation.set(Math.PI/4,0,0);
+  car1.add(carLight2);
+
+  var tireGeometry = new THREE.CylinderGeometry( 0.5, 0.5, 0.5, 32 );
+  var tireMaterial = new THREE.MeshStandardMaterial( {color: 0x000000} );
+  var tire1 = new THREE.Mesh( tireGeometry, tireMaterial );
+  tire1.castShadow = true;
+  tire1.position.set(-3.5,-1,-1.5);
+  tire1.rotation.set(0,0,Math.PI/2);
+  car1.add(tire1);
+
+  var tire2 = new THREE.Mesh( tireGeometry, tireMaterial );
+  tire2.castShadow = true;
+  tire2.position.set(-0.9,-1,-1.5);
+  tire2.rotation.set(0,0,Math.PI/2);
+  car1.add(tire2);
+
+  var tire3 = new THREE.Mesh( tireGeometry, tireMaterial );
+  tire3.castShadow = true;
+  tire3.position.set(-0.9,-1,1.5);
+  tire3.rotation.set(0,0,Math.PI/2);
+  car1.add(tire3);
+
+  var tire4 = new THREE.Mesh( tireGeometry, tireMaterial );
+  tire4.castShadow = true;
+  tire4.position.set(-3.5,-1,1.5);
+  tire4.rotation.set(0,0,Math.PI/2);
+  car1.add(tire4);
+
+  var wheelGeometry = new THREE.CylinderGeometry(0.3,0.3,1,6);
+  var wheelMaterial = new THREE.MeshPhongMaterial({color:0x808080});
+  var wheel1 = new THREE.Mesh(wheelGeometry,wheelMaterial);
+  wheel1.position.set(-0.75,-1,-1.5);
+  wheel1.scale.set(1,0.3,1);
+  wheel1.rotation.set(0,0,Math.PI/2);
+  car1.add(wheel1);
+
+  var wheel2 = new THREE.Mesh(wheelGeometry,wheelMaterial);
+  wheel2.position.set(-0.75,-1,1.5);
+  wheel2.scale.set(1,0.3,1);
+  wheel2.rotation.set(0,0,Math.PI/2);
+  car1.add(wheel2);
+
+  var wheel3 = new THREE.Mesh(wheelGeometry,wheelMaterial);
+  wheel3.position.set(-3.65,-1,1.5);
+  wheel3.scale.set(1,0.3,1);
+  wheel3.rotation.set(0,0,Math.PI/2);
+  car1.add(wheel3);
+
+  var wheel4 = new THREE.Mesh(wheelGeometry,wheelMaterial);
+  wheel4.position.set(-3.65,-1,-1.5);
+  wheel4.scale.set(1,0.3,1);
+  wheel4.rotation.set(0,0,Math.PI/2);
+  car1.add(wheel4);
+
+  //*****************************************************************************************************************
+  var car1ColorRed = Math.floor(Math.random() * 255);
+  var car1ColorGreen = Math.floor(Math.random() * 255);
+  var car1ColorBlue = Math.floor(Math.random() * 255);
+  var car1Color = car1ColorRed.toString(16) + car1ColorGreen.toString(16) + car1ColorBlue.toString(16);
+  var car1UnderBodyGeometry = new THREE.BoxGeometry(1,1,1);
+  var car1UnderBodyMaterial = new THREE.MeshPhongMaterial();
+  var car1UnderBody = new THREE.Mesh(car1UnderBodyGeometry,car1UnderBodyMaterial);
+  car1UnderBody.material.color.setStyle("#"+car1Color);
+  car1UnderBody.position.set(-2.2,0,-45);
+  car1UnderBody.scale.set(3,1.3,5);
+  car1UnderBody.castShadow = true;
+  car1UnderBody.receiveShadow = true;
+  car2.add(car1UnderBody);
+
+  var car1UpperBody = new THREE.Mesh(car1UnderBodyGeometry,car1UnderBodyMaterial);
+  car1UpperBody.position.set(-2.2,1.3,-45);
+  car1UpperBody.scale.set(3,1.3,2.5);
+  car1UpperBody.castShadow = true;
+  car1UpperBody.receiveShadow = true;
+  car2.add(car1UpperBody);
+
+  var car1WindowGeometry = new THREE.BoxGeometry(1,1,1);
+  var car1WindowMaterial = new THREE.MeshPhongMaterial({color:0x00ffff});
+  var car1Window1 = new THREE.Mesh(car1WindowGeometry,car1WindowMaterial);
+  car1Window1.position.set(-2.2,1.3,-45);
+  car1Window1.scale.set(3.1,1,2.3);
+  car1Window1.castShadow = true;
+  car1Window1.receiveShadow = true;
+  car2.add(car1Window1);
+
+  var car1Window2 = new THREE.Mesh(car1WindowGeometry,car1WindowMaterial);
+  car1Window2.position.set(-2.2,1.3,-45);
+  car1Window2.scale.set(2.9,1,2.6);
+  car1Window2.castShadow = true;
+  car1Window2.receiveShadow = true;
+  car2.add(car1Window2);
+
+  var car1BackLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car1BackLight1Material = new THREE.MeshPhongMaterial({color:0xff0000});
+  var car1BackLight1 = new THREE.Mesh(car1BackLight1Geometry,car1BackLight1Material);
+  car1BackLight1.position.set(-1.2,0,2.3-45);
+  car1BackLight1.scale.set(0.7,0.5,0.5);
+  car1BackLight1.castShadow = true;
+  car1BackLight1.receiveShadow = true;
+  car2.add(car1BackLight1);
+  
+  var car1BackLight2 = new THREE.Mesh(car1BackLight1Geometry,car1BackLight1Material);
+  car1BackLight2.position.set(-3.2,0,2.3-45);
+  car1BackLight2.scale.set(0.7,0.5,0.5);
+  car1BackLight2.castShadow = true;
+  car1BackLight2.receiveShadow = true;
+  car2.add(car1BackLight2);
+  
+  var car1FrontLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car1FrontLight1Material = new THREE.MeshPhongMaterial({color:0xff8000});
+  var car1FrontLight1 = new THREE.Mesh(car1FrontLight1Geometry,car1FrontLight1Material);
+  car1FrontLight1.position.set(-3.2,0,-2.3-45);
+  car1FrontLight1.scale.set(0.7,0.5,0.5);
+  car1FrontLight1.castShadow = true;
+  car1FrontLight1.receiveShadow = true;
+  car2.add(car1FrontLight1);
+
+  var car1FrontLight2 = new THREE.Mesh(car1FrontLight1Geometry,car1FrontLight1Material);
+  car1FrontLight2.position.set(-1.2,0,-2.3-45);
+  car1FrontLight2.scale.set(0.7,0.5,0.5);
+  car1FrontLight2.castShadow = true;
+  car1FrontLight2.receiveShadow = true;
+  car2.add(car1FrontLight2);
+
+  var car1Light1 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car1Light1.position.set(-3.2,0,-4-45);
+  car1Light1.rotation.set(Math.PI/4,0,0);
+  car2.add(car1Light1);
+
+  var car1Light2 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car1Light2.position.set(-1.2,0,-4-45);
+  car1Light2.rotation.set(Math.PI/4,0,0);
+  car2.add(car1Light2);
+
+  var tire1Geometry = new THREE.CylinderGeometry( 0.5, 0.5, 0.5, 32 );
+  var tire1Material = new THREE.MeshStandardMaterial( {color: 0x000000} );
+  var tire11 = new THREE.Mesh( tire1Geometry, tire1Material );
+  tire11.castShadow = true;
+  tire11.position.set(-3.5,-1,-1.5-45);
+  tire11.rotation.set(0,0,Math.PI/2);
+  car2.add(tire11);
+
+  var tire21 = new THREE.Mesh( tire1Geometry, tire1Material );
+  tire21.castShadow = true;
+  tire21.position.set(-0.9,-1,-1.5-45);
+  tire21.rotation.set(0,0,Math.PI/2);
+  car2.add(tire21);
+
+  var tire31 = new THREE.Mesh( tire1Geometry, tire1Material );
+  tire31.castShadow = true;
+  tire31.position.set(-0.9,-1,1.5-45);
+  tire31.rotation.set(0,0,Math.PI/2);
+  car2.add(tire31);
+
+  var tire41 = new THREE.Mesh( tire1Geometry, tire1Material );
+  tire41.castShadow = true;
+  tire41.position.set(-3.5,-1,1.5-45);
+  tire41.rotation.set(0,0,Math.PI/2);
+  car2.add(tire41);
+
+  var wheel1Geometry = new THREE.CylinderGeometry(0.3,0.3,1,6);
+  var wheel1Material = new THREE.MeshPhongMaterial({color:0x808080});
+  var wheel11 = new THREE.Mesh(wheel1Geometry,wheel1Material);
+  wheel11.position.set(-0.75,-1,-1.5-45);
+  wheel11.scale.set(1,0.3,1);
+  wheel11.rotation.set(0,0,Math.PI/2);
+  car2.add(wheel11);
+
+  var wheel21 = new THREE.Mesh(wheel1Geometry,wheel1Material);
+  wheel21.position.set(-0.75,-1,1.5-45);
+  wheel21.scale.set(1,0.3,1);
+  wheel21.rotation.set(0,0,Math.PI/2);
+  car2.add(wheel21);
+
+  var wheel31 = new THREE.Mesh(wheel1Geometry,wheel1Material);
+  wheel31.position.set(-3.65,-1,1.5-45);
+  wheel31.scale.set(1,0.3,1);
+  wheel31.rotation.set(0,0,Math.PI/2);
+  car2.add(wheel31);
+
+  var wheel41 = new THREE.Mesh(wheel1Geometry,wheel1Material);
+  wheel41.position.set(-3.65,-1,-1.5-45);
+  wheel41.scale.set(1,0.3,1);
+  wheel41.rotation.set(0,0,Math.PI/2);
+  car2.add(wheel41);
+
+  //************************************************************************************************************************
+  var car2ColorRed = Math.floor(Math.random() * 255);
+  var car2ColorGreen = Math.floor(Math.random() * 255);
+  var car2ColorBlue = Math.floor(Math.random() * 255);
+  var car2Color = car2ColorRed.toString(16) + car2ColorGreen.toString(16) + car2ColorBlue.toString(16);
+  var car2UnderBodyGeometry = new THREE.BoxGeometry(1,1,1);
+  var car2UnderBodyMaterial = new THREE.MeshPhongMaterial();
+  var car2UnderBody = new THREE.Mesh(car2UnderBodyGeometry,car2UnderBodyMaterial);
+  car2UnderBody.material.color.setStyle("#"+car2Color);
+  car2UnderBody.position.set(-2.2,0,-45);
+  car2UnderBody.scale.set(3,1.3,5);
+  car2UnderBody.castShadow = true;
+  car2UnderBody.receiveShadow = true;
+  car3.add(car2UnderBody);
+
+  var car2UpperBody = new THREE.Mesh(car2UnderBodyGeometry,car2UnderBodyMaterial);
+  car2UpperBody.position.set(-2.2,1.3,-45);
+  car2UpperBody.scale.set(3,1.3,2.5);
+  car2UpperBody.castShadow = true;
+  car2UpperBody.receiveShadow = true;
+  car3.add(car2UpperBody);
+
+  var car2WindowGeometry = new THREE.BoxGeometry(1,1,1);
+  var car2WindowMaterial = new THREE.MeshPhongMaterial({color:0x00ffff});
+  var car2Window1 = new THREE.Mesh(car2WindowGeometry,car2WindowMaterial);
+  car2Window1.position.set(-2.2,1.3,-45);
+  car2Window1.scale.set(3.1,1,2.3);
+  car2Window1.castShadow = true;
+  car2Window1.receiveShadow = true;
+  car3.add(car2Window1);
+
+  var car2Window2 = new THREE.Mesh(car2WindowGeometry,car2WindowMaterial);
+  car2Window2.position.set(-2.2,1.3,-45);
+  car2Window2.scale.set(2.9,1,2.6);
+  car2Window2.castShadow = true;
+  car2Window2.receiveShadow = true;
+  car3.add(car2Window2);
+
+  var car2BackLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car2BackLight1Material = new THREE.MeshPhongMaterial({color:0xff0000});
+  var car2BackLight1 = new THREE.Mesh(car2BackLight1Geometry,car2BackLight1Material);
+  car2BackLight1.position.set(-1.2,0,2.3-45);
+  car2BackLight1.scale.set(0.7,0.5,0.5);
+  car2BackLight1.castShadow = true;
+  car2BackLight1.receiveShadow = true;
+  car3.add(car2BackLight1);
+  
+  var car2BackLight2 = new THREE.Mesh(car2BackLight1Geometry,car2BackLight1Material);
+  car2BackLight2.position.set(-3.2,0,2.3-45);
+  car2BackLight2.scale.set(0.7,0.5,0.5);
+  car2BackLight2.castShadow = true;
+  car2BackLight2.receiveShadow = true;
+  car3.add(car2BackLight2);
+  
+  var car2FrontLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car2FrontLight1Material = new THREE.MeshPhongMaterial({color:0xff8000});
+  var car2FrontLight1 = new THREE.Mesh(car2FrontLight1Geometry,car2FrontLight1Material);
+  car2FrontLight1.position.set(-3.2,0,-2.3-45);
+  car2FrontLight1.scale.set(0.7,0.5,0.5);
+  car2FrontLight1.castShadow = true;
+  car2FrontLight1.receiveShadow = true;
+  car3.add(car2FrontLight1);
+
+  var car2FrontLight2 = new THREE.Mesh(car2FrontLight1Geometry,car2FrontLight1Material);
+  car2FrontLight2.position.set(-1.2,0,-2.3-45);
+  car2FrontLight2.scale.set(0.7,0.5,0.5);
+  car2FrontLight2.castShadow = true;
+  car2FrontLight2.receiveShadow = true;
+  car3.add(car2FrontLight2);
+
+  var car2Light1 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car2Light1.position.set(-3.2,0,-4-45);
+  car2Light1.rotation.set(Math.PI/4,0,0);
+  car3.add(car2Light1);
+
+  var car2Light2 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car2Light2.position.set(-1.2,0,-4-45);
+  car2Light2.rotation.set(Math.PI/4,0,0);
+  car3.add(car2Light2);
+
+  var tire2Geometry = new THREE.CylinderGeometry( 0.5, 0.5, 0.5, 32 );
+  var tire2Material = new THREE.MeshStandardMaterial( {color: 0x000000} );
+  var tire12 = new THREE.Mesh( tire2Geometry, tire2Material );
+  tire12.castShadow = true;
+  tire12.position.set(-3.5,-1,-1.5-45);
+  tire12.rotation.set(0,0,Math.PI/2);
+  car3.add(tire12);
+
+  var tire22 = new THREE.Mesh( tire2Geometry, tire2Material );
+  tire22.castShadow = true;
+  tire22.position.set(-0.9,-1,-1.5-45);
+  tire22.rotation.set(0,0,Math.PI/2);
+  car3.add(tire22);
+
+  var tire32 = new THREE.Mesh( tire2Geometry, tire2Material );
+  tire32.castShadow = true;
+  tire32.position.set(-0.9,-1,1.5-45);
+  tire32.rotation.set(0,0,Math.PI/2);
+  car3.add(tire32);
+
+  var tire42 = new THREE.Mesh( tire2Geometry, tire2Material );
+  tire42.castShadow = true;
+  tire42.position.set(-3.5,-1,1.5-45);
+  tire42.rotation.set(0,0,Math.PI/2);
+  car3.add(tire42);
+
+  var wheel2Geometry = new THREE.CylinderGeometry(0.3,0.3,1,6);
+  var wheel2Material = new THREE.MeshPhongMaterial({color:0x808080});
+  var wheel12 = new THREE.Mesh(wheel2Geometry,wheel2Material);
+  wheel12.position.set(-0.75,-1,-1.5-45);
+  wheel12.scale.set(1,0.3,1);
+  wheel12.rotation.set(0,0,Math.PI/2);
+  car3.add(wheel12);
+
+  var wheel22 = new THREE.Mesh(wheel2Geometry,wheel2Material);
+  wheel22.position.set(-0.75,-1,1.5-45);
+  wheel22.scale.set(1,0.3,1);
+  wheel22.rotation.set(0,0,Math.PI/2);
+  car3.add(wheel22);
+
+  var wheel32 = new THREE.Mesh(wheel2Geometry,wheel2Material);
+  wheel32.position.set(-3.65,-1,1.5-45);
+  wheel32.scale.set(1,0.3,1);
+  wheel32.rotation.set(0,0,Math.PI/2);
+  car3.add(wheel32);
+
+  var wheel42 = new THREE.Mesh(wheel2Geometry,wheel2Material);
+  wheel42.position.set(-3.65,-1,-1.5-45);
+  wheel42.scale.set(1,0.3,1);
+  wheel42.rotation.set(0,0,Math.PI/2);
+  car3.add(wheel42);
+
+  car3.rotation.y = Math.PI;
+
+  //************************************************************************************************************************
+  var car3ColorRed = Math.floor(Math.random() * 255);
+  var car3ColorGreen = Math.floor(Math.random() * 255);
+  var car3ColorBlue = Math.floor(Math.random() * 255);
+  var car3Color = car3ColorRed.toString(16) + car3ColorGreen.toString(16) + car3ColorBlue.toString(16);
+  var car3UnderBodyGeometry = new THREE.BoxGeometry(1,1,1);
+  var car3UnderBodyMaterial = new THREE.MeshPhongMaterial();
+  var car3UnderBody = new THREE.Mesh(car3UnderBodyGeometry,car3UnderBodyMaterial);
+  car3UnderBody.material.color.setStyle("#"+car3Color);
+  car3UnderBody.position.set(-2.2,0,-50);
+  car3UnderBody.scale.set(3,1.3,5);
+  car3UnderBody.castShadow = true;
+  car3UnderBody.receiveShadow = true;
+  car4.add(car3UnderBody);
+
+  var car3UpperBody = new THREE.Mesh(car3UnderBodyGeometry,car3UnderBodyMaterial);
+  car3UpperBody.position.set(-2.2,1.3,-50);
+  car3UpperBody.scale.set(3,1.3,2.5);
+  car3UpperBody.castShadow = true;
+  car3UpperBody.receiveShadow = true;
+  car4.add(car3UpperBody);
+
+  var car3WindowGeometry = new THREE.BoxGeometry(1,1,1);
+  var car3WindowMaterial = new THREE.MeshPhongMaterial({color:0x00ffff});
+  var car3Window1 = new THREE.Mesh(car3WindowGeometry,car3WindowMaterial);
+  car3Window1.position.set(-2.2,1.3,-50);
+  car3Window1.scale.set(3.1,1,2.3);
+  car3Window1.castShadow = true;
+  car3Window1.receiveShadow = true;
+  car4.add(car3Window1);
+
+  var car3Window2 = new THREE.Mesh(car3WindowGeometry,car3WindowMaterial);
+  car3Window2.position.set(-2.2,1.3,-50);
+  car3Window2.scale.set(2.9,1,2.6);
+  car3Window2.castShadow = true;
+  car3Window2.receiveShadow = true;
+  car4.add(car3Window2);
+
+  var car3BackLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car3BackLight1Material = new THREE.MeshPhongMaterial({color:0xff0000});
+  var car3BackLight1 = new THREE.Mesh(car3BackLight1Geometry,car3BackLight1Material);
+  car3BackLight1.position.set(-1.2,0,2.30-50);
+  car3BackLight1.scale.set(0.7,0.5,0.5);
+  car3BackLight1.castShadow = true;
+  car3BackLight1.receiveShadow = true;
+  car4.add(car3BackLight1);
+  
+  var car3BackLight2 = new THREE.Mesh(car3BackLight1Geometry,car3BackLight1Material);
+  car3BackLight2.position.set(-3.2,0,2.30-50);
+  car3BackLight2.scale.set(0.7,0.5,0.5);
+  car3BackLight2.castShadow = true;
+  car3BackLight2.receiveShadow = true;
+  car4.add(car3BackLight2);
+  
+  var car3FrontLight1Geometry = new THREE.BoxGeometry(1,1,1);
+  var car3FrontLight1Material = new THREE.MeshPhongMaterial({color:0xff8000});
+  var car3FrontLight1 = new THREE.Mesh(car3FrontLight1Geometry,car3FrontLight1Material);
+  car3FrontLight1.position.set(-3.2,0,-2.30-50);
+  car3FrontLight1.scale.set(0.7,0.5,0.5);
+  car3FrontLight1.castShadow = true;
+  car3FrontLight1.receiveShadow = true;
+  car4.add(car3FrontLight1);
+
+  var car3FrontLight2 = new THREE.Mesh(car3FrontLight1Geometry,car3FrontLight1Material);
+  car3FrontLight2.position.set(-1.2,0,-2.30-50);
+  car3FrontLight2.scale.set(0.7,0.5,0.5);
+  car3FrontLight2.castShadow = true;
+  car3FrontLight2.receiveShadow = true;
+  car4.add(car3FrontLight2);
+
+  var car3Light1 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car3Light1.position.set(-3.2,0,-4-50);
+  car3Light1.rotation.set(Math.PI/4,0,0);
+  car4.add(car3Light1);
+
+  var car3Light2 = new THREE.PointLight(0xffffff,10,2,1.0);
+  car3Light2.position.set(-1.2,0,-4-50);
+  car3Light2.rotation.set(Math.PI/4,0,0);
+  car4.add(car3Light2);
+
+  var tire3Geometry = new THREE.CylinderGeometry( 0.5, 0.5, 0.5, 32 );
+  var tire3Material = new THREE.MeshStandardMaterial( {color: 0x000000} );
+  var tire13 = new THREE.Mesh( tire3Geometry, tire3Material );
+  tire13.castShadow = true;
+  tire13.position.set(-3.5,-1,-1.50-50);
+  tire13.rotation.set(0,0,Math.PI/2);
+  car4.add(tire13);
+
+  var tire23 = new THREE.Mesh( tire3Geometry, tire3Material );
+  tire23.castShadow = true;
+  tire23.position.set(-0.9,-1,-1.50-50);
+  tire23.rotation.set(0,0,Math.PI/2);
+  car4.add(tire23);
+
+  var tire33 = new THREE.Mesh( tire3Geometry, tire3Material );
+  tire33.castShadow = true;
+  tire33.position.set(-0.9,-1,1.50-50);
+  tire33.rotation.set(0,0,Math.PI/2);
+  car4.add(tire33);
+
+  var tire43 = new THREE.Mesh( tire3Geometry, tire3Material );
+  tire43.castShadow = true;
+  tire43.position.set(-3.5,-1,1.50-50);
+  tire43.rotation.set(0,0,Math.PI/2);
+  car4.add(tire43);
+
+  var wheel3Geometry = new THREE.CylinderGeometry(0.3,0.3,1,6);
+  var wheel3Material = new THREE.MeshPhongMaterial({color:0x808080});
+  var wheel13 = new THREE.Mesh(wheel3Geometry,wheel3Material);
+  wheel13.position.set(-0.75,-1,-1.50-50);
+  wheel13.scale.set(1,0.3,1);
+  wheel13.rotation.set(0,0,Math.PI/2);
+  car4.add(wheel13);
+
+  var wheel23 = new THREE.Mesh(wheel3Geometry,wheel3Material);
+  wheel23.position.set(-0.75,-1,1.50-50);
+  wheel23.scale.set(1,0.3,1);
+  wheel23.rotation.set(0,0,Math.PI/2);
+  car4.add(wheel23);
+
+  var wheel33 = new THREE.Mesh(wheel3Geometry,wheel3Material);
+  wheel33.position.set(-3.65,-1,1.50-50);
+  wheel33.scale.set(1,0.3,1);
+  wheel33.rotation.set(0,0,Math.PI/2);
+  car4.add(wheel33);
+
+  var wheel43 = new THREE.Mesh(wheel3Geometry,wheel3Material);
+  wheel43.position.set(-3.65,-1,-1.50-50);
+  wheel43.scale.set(1,0.3,1);
+  wheel43.rotation.set(0,0,Math.PI/2);
+  car4.add(wheel43);
+
+  car4.rotation.y = Math.PI;
+  
+  scene.add(roadGroup);
+  scene.add(baseStreetLightGroup);
+  scene.add(streetLightGroup);
+  scene.add(car1);
+  scene.add(car2);
+  scene.add(car3);
+  scene.add(car4);
+
+  console.log(car1.children);
+
+  update();
+
+  // 毎フレーム時に実行されるループイベントです
+  function update() {
+    // レンダリング
+    renderer.render(scene, camera);
+    requestAnimationFrame(update);
+
+    car1.position.z -= 0.05;
+    car2.position.z -= 0.05;
+    car3.position.z += 0.05;
+    car4.position.z += 0.05;
+
+    for(var i = 14;i < 18;i++){
+      car1.children[i].rotation.x -= 0.05;
+      car2.children[i].rotation.x -= 0.05;
+      car3.children[i].rotation.x -= 0.05;
+      car4.children[i].rotation.x -= 0.05;
+    }
+
+    if(car1.position.z <= -95){
+      car1.position.z = 0;
+    }
+    if(car2.position.z <= -50){
+      car2.position.z = 45;
+    }
+    if(car3.position.z >= -50){
+      car3.position.z = -150;
+    }
+    if(car4.position.z >= -50){
+      car4.position.z = -170;
+    }
+  }
+}
+ </script>
+</body>
+</html>

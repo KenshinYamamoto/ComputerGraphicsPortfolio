@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>practice3</title>
+
+  <!-- three.jsを読み込む(ローカル) -->
+  <!-- <script src="./three.js"></script> -->
+  <!-- three.jsを読み込む(CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
+
+</head>
+<body>
+  <h1>第2回目レポート</h1>
+  <h2>タイトル:無限ループ</h2>
+  <p>
+    ボールをローカルで回転させながらワールドでも回転させ、ドーナツは3色用意して座標がz > 6を満たしたら原点に戻す処理を行っている。<br>
+    中心の四角、三角錐、トーラスノットはローカルで回転させながら2秒に1度の頻度で変化するようにプログラムを組んでいる。
+  </p>
+
+ <script>
+  var init = function() {
+    var clock = new THREE.Clock();
+    var delta = 0;
+    var count = 0;
+    var width = 800,
+        height = 600;
+  
+    // レンダラーを作成
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(width, height);
+    document.body.appendChild(renderer.domElement);
+  
+    // シーンを作成
+    var scene = new THREE.Scene();
+
+    // カメラを作成
+    var camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+    camera.position.set(0, 0, 5);  //位置を指定
+    camera.lookAt(0, 0, 0); //見つめる方向
+
+    // 平行光源
+    var directionalLight1 = new THREE.DirectionalLight(0xffffff);
+    directionalLight1.position.set(1, 1, 1);   //位置を指定
+    scene.add(directionalLight1);     // シーンに追加
+
+    var directionalLight2 = new THREE.DirectionalLight(0xffffff);
+    directionalLight2.position.set(-1, -1, 1);   //位置を指定
+    scene.add(directionalLight2);     // シーンに追加
+
+    // 箱を作成
+    var geometry = new THREE.BoxGeometry(1, 1, 1);
+    var material = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+    var box = new THREE.Mesh(geometry, material);
+    box.position.set(0,0,0); //位置を指定
+    scene.add(box);   // シーンに追加
+
+    // 球をワールド座標で操作するためのグループ
+    const group1 = new THREE.Group();
+    const group2 = new THREE.Group();
+    const group3 = new THREE.Group();
+    scene.add(group1);
+    scene.add(group2);
+    scene.add(group3);
+
+    // 球を作成
+    var sphereGeometry1 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial1 = new THREE.MeshPhongMaterial({color:0x000ff00,wireframe:true});
+    var sphere1 = new THREE.Mesh(sphereGeometry1,sphereMaterial1);
+    sphere1.position.set(1.5,0,0);
+    scene.add(sphere1);
+    group1.add(sphere1);
+
+    var sphereGeometry2 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial2 = new THREE.MeshPhongMaterial({color:0x000ff00,wireframe:true});
+    var sphere2 = new THREE.Mesh(sphereGeometry2,sphereMaterial2);
+    sphere2.position.set(-1.5,0,0);
+    scene.add(sphere2);
+    group1.add(sphere2);
+
+    var sphereGeometry3 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial3 = new THREE.MeshPhongMaterial({color:0x0ffff00,wireframe:true});
+    var sphere3 = new THREE.Mesh(sphereGeometry3,sphereMaterial3);
+    sphere3.position.set(0,0,-1.5);
+    scene.add(sphere3);
+    group2.add(sphere3);
+
+    var sphereGeometry4 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial4 = new THREE.MeshPhongMaterial({color:0x0ffff00,wireframe:true});
+    var sphere4 = new THREE.Mesh(sphereGeometry4,sphereMaterial4);
+    sphere4.position.set(0,0,1.5);
+    scene.add(sphere4);
+    group2.add(sphere4);
+
+    var sphereGeometry5 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial5 = new THREE.MeshPhongMaterial({color:0x0ff0000,wireframe:true});
+    var sphere5 = new THREE.Mesh(sphereGeometry5,sphereMaterial5);
+    sphere5.position.set(0,1.5,0);
+    scene.add(sphere5);
+    group3.add(sphere5);
+
+    var sphereGeometry6 = new THREE.SphereGeometry(0.5,32,32);
+    var sphereMaterial6 = new THREE.MeshPhongMaterial({color:0x0ff0000,wireframe:true});
+    var sphere6 = new THREE.Mesh(sphereGeometry6,sphereMaterial6);
+    sphere6.position.set(0,-1.5,0);
+    scene.add(sphere6);
+    group3.add(sphere6);
+
+    // ドーナツを作成
+    const torusGeometry1 = new THREE.TorusGeometry( 0.8, 0.1, 100, 100 );
+    const torusMaterial1 = new THREE.MeshStandardMaterial( { color: 0xff00ff } ); // ピンク
+    const torus1 = new THREE.Mesh( torusGeometry1, torusMaterial1 );
+    torus1.position.set(0,0,0);
+    scene.add( torus1 );
+
+    const torusGeometry2 = new THREE.TorusGeometry( 0.8, 0.1, 100, 100 );
+    const torusMaterial2 = new THREE.MeshStandardMaterial( { color: 0x00ffff } ); // 水色
+    const torus2 = new THREE.Mesh( torusGeometry2, torusMaterial2 );
+    torus2.position.set(0,0,-2);
+    scene.add( torus2 );
+
+    const torusGeometry3 = new THREE.TorusGeometry( 0.8, 0.1, 100, 100 );
+    const torusMaterial3 = new THREE.MeshStandardMaterial( { color: 0xffffff } ); // 白
+    const torus3 = new THREE.Mesh( torusGeometry3, torusMaterial3 );
+    torus3.position.set(0,0,-4);
+    scene.add( torus3 );
+
+    // 円錐を定義
+    var coneGeometry = new THREE.ConeGeometry(0.5,1,32);
+    var coneMaterial = new THREE.MeshPhongMaterial({color:0x4b0082});
+    var cone = new THREE.Mesh(coneGeometry,coneMaterial);
+    cone.position.set(0,0,0);
+
+    // トーラスノットを定義
+    var torusKnotGeometry = new THREE.TorusKnotGeometry(0.5,0.1,20,6,3,4);
+    var torusKnotMaterial = new THREE.MeshPhongMaterial({color:0xff8000});
+    var torusKnot = new THREE.Mesh(torusKnotGeometry,torusKnotMaterial);
+    torusKnot.position.set(0,0,0);
+  
+    // 初回実行
+    var update = function() {
+      requestAnimationFrame(update);
+  
+      // 箱を回転させる
+      box.rotation.x += 0.01;
+      box.rotation.y += 0.01;
+
+      // 球を回転(ローカル)
+      sphere1.rotation.y += 0.01;
+      sphere2.rotation.y += 0.01;
+      sphere3.rotation.x += 0.01;
+      sphere4.rotation.x += 0.01;
+      sphere5.rotation.z -= 0.01;
+      sphere6.rotation.z -= 0.01;
+      // 球を回転(ワールド)
+      group1.rotation.y += 0.01;
+      group2.rotation.x += 0.01;
+      group3.rotation.z -= 0.01;
+
+      // ドーナツの位置をカメラ方向に
+      torus1.position.z += 0.01;
+      torus2.position.z += 0.01;
+      torus3.position.z += 0.01;
+
+      // 円錐を回転
+      cone.rotation.x += 0.01;
+      cone.rotation.y += 0.02;
+      cone.rotation.z += 0.01;
+
+      // トーラスノットを回転
+      torusKnot.rotation.x += 0.01;
+      torusKnot.rotation.y += 0.02;
+
+      // ドーナツの位置がZ > 6になったら位置をリセット
+      if(torus1.position.z > 6){
+          torus1.position.z = 0;
+      }
+      if(torus2.position.z > 6){
+          torus2.position.z = 0;
+      }
+      if(torus3.position.z > 6){
+          torus3.position.z = 0;
+      }
+
+      // 2秒に1度生成するオブジェクトを変更
+      if(delta > 2){
+        switch(count % 3){
+          case 0: // 箱を生成
+            scene.remove(box);
+            box.material.dispose();
+            box.geometry.dispose();
+            scene.add(cone);
+          break;
+          case 1: // 円錐を生成
+            scene.remove(cone);
+            cone.material.dispose();
+            cone.geometry.dispose();
+            scene.add(torusKnot);
+          break;
+          case 2: // トーラスノットを生成
+            scene.remove(torusKnot);
+            torusKnot.material.dispose();
+            torusKnot.geometry.dispose();
+            scene.add(box);
+          break;
+        }
+        delta = 0;
+        count++;
+      }
+      delta += clock.getDelta();
+      renderer.render(scene, camera);
+    };
+    update();
+  }
+  window.addEventListener('DOMContentLoaded', init);
+ </script>
+</body>
+</html>

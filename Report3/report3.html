@@ -1,0 +1,325 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Report3</title>
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+  </head>
+<body>
+  <h1>第3回目レポート</h1>
+  <h2>タイトル:3DS</h2>
+  <p>
+    3DSが開閉する様子をプログラムで表現した。<br>
+    3DSの本体にcastShadowとrecieveShadowを反映し、できる限りリアルさを表現した。また、あえて充電のライトにはcastShadowとrecieveShadowを反映させないことで充電のライトが光っているように見せている。
+  </p>
+
+ <script>
+      // ページの読み込みを待つ
+      window.addEventListener('DOMContentLoaded', init);
+
+      function init() {
+        var a = 1;
+
+        // サイズを指定
+        const width = 800
+        const height = 600;
+
+        // レンダラーを作成
+        var renderer = new THREE.WebGLRenderer();
+        document.body.appendChild(renderer.domElement);
+        renderer.setSize(width, height);
+        renderer.shadowMap.enabled = true;
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(45, width / height);
+        // カメラの初期座標を設定
+        camera.position.set(0, 0, 5);
+
+        // カメラコントローラーを作成
+        const controls = new THREE.OrbitControls(camera, document.body); 
+        
+        // 平行光源1
+        var directionalLight1 = new THREE.DirectionalLight(0xffffff);
+        directionalLight1.position.set(0, 10, 10);
+        directionalLight1.castShadow = true;
+        // シーンに追加
+        scene.add(directionalLight1);
+        // 平行光源2
+        var directionalLight2 = new THREE.DirectionalLight(0x888888,0.1);
+        directionalLight2.position.set(0, 10, -10);
+        directionalLight2.castShadow = true;
+        // シーンに追加
+        scene.add(directionalLight2);
+
+        // グループを作成
+        const underScreen = new THREE.Group();
+        underScreen.position.set(0,0,0);
+        const upperScreen = new THREE.Group();
+        upperScreen.position.set(0,0.05,-0.6);
+        const speakers = new THREE.Group();
+        const connectionParts = new THREE.Group();
+        const arrowKey = new THREE.Group();
+        const buttons = new THREE.Group();
+        const all = new THREE.Group();
+
+        // 平面
+        var planeGeometry = new THREE.PlaneGeometry(10,10);
+        var planeMaterial = new THREE.MeshPhongMaterial({color:0x00ff00});
+        var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+        plane.receiveShadow = true;
+        plane.rotation.set(-Math.PI/2,0,0);
+        plane.position.set(0,-1.5,-2);
+        scene.add(plane);
+        
+
+        // 下画面のベース
+        var baseUnderScreenGeometry = new THREE.BoxGeometry(1,1,1);
+        var baseUnderScreenMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var baseUnderScreen = new THREE.Mesh(baseUnderScreenGeometry,baseUnderScreenMaterial);
+        baseUnderScreen.scale.set(2.5,0.1,1.2);
+        baseUnderScreen.position.set(0,0,0);
+        baseUnderScreen.castShadow = true;
+        baseUnderScreen.receiveShadow = true;
+
+        // 下画面の液晶
+        var underScreenLCDGeometry = new THREE.BoxGeometry(1,1,1);
+        var underScreenLCDMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+        var underScreenLCD = new THREE.Mesh(underScreenLCDGeometry,underScreenLCDMaterial);
+        underScreenLCD.scale.set(1.3,0.1,0.9);
+        underScreenLCD.position.set(0,0.01,0.05);
+        underScreenLCD.castShadow = true;
+        underScreenLCD.receiveShadow = true;
+        
+
+        // 十字キー
+        var arrowKeyGeometry = new THREE.BoxGeometry(1,1,1);
+        var arrowKeyMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var arrowKey1 = new THREE.Mesh(arrowKeyGeometry,arrowKeyMaterial);
+        arrowKey1.scale.set(0.1,0.1,0.4);
+        arrowKey1.position.set(-0.95,0.04,-0.1);
+        arrowKey1.castShadow = true;
+        arrowKey1.receiveShadow = true;
+        arrowKey.add(arrowKey1);
+        var arrowKey2 = new THREE.Mesh(arrowKeyGeometry,arrowKeyMaterial);
+        arrowKey2.scale.set(0.4,0.1,0.1);
+        arrowKey2.position.set(-0.95,0.04,-0.1);
+        arrowKey2.castShadow = true;
+        arrowKey2.receiveShadow = true;
+        arrowKey.add(arrowKey2);
+
+        // ボタン
+        var buttonXGeometry = new THREE.SphereGeometry(0.5,32,32);
+        var buttonXMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var buttonX = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        buttonX.scale.set(0.15,0.1,0.15);
+        buttonX.position.set(0.95,0.04,-0.3);
+        buttonX.castShadow = true;
+        buttonX.receiveShadow = true;
+        buttons.add(buttonX);
+        var buttonA = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        buttonA.scale.set(buttonX.scale.x,buttonX.scale.y,buttonX.scale.z);
+        buttonA.position.set(1.1,0.04,-0.15);
+        buttonA.castShadow = true;
+        buttonA.receiveShadow = true;
+        buttons.add(buttonA);
+        var buttonB = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        buttonB.scale.set(buttonX.scale.x,buttonX.scale.y,buttonX.scale.z);
+        buttonB.position.set(0.95,0.04,0);
+        buttonB.castShadow = true;
+        buttonB.receiveShadow = true;
+        buttons.add(buttonB);
+        var buttonY = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        buttonY.scale.set(buttonX.scale.x,buttonX.scale.y,buttonX.scale.z);
+        buttonY.position.set(0.8,0.04,-0.15);
+        buttonY.castShadow = true;
+        buttonY.receiveShadow = true;
+        buttons.add(buttonY);
+        var startButton = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        startButton.scale.set(0.1,0.1,0.1);
+        startButton.position.set(0.75,0.03,0.25);
+        startButton.castShadow = true;
+        startButton.receiveShadow = true;
+        buttons.add(startButton);
+        var selectButton = new THREE.Mesh(buttonXGeometry,buttonXMaterial);
+        selectButton.scale.set(0.1,0.1,0.1);
+        selectButton.position.set(0.75,0.03,0.4);
+        selectButton.castShadow = true;
+        selectButton.receiveShadow = true;
+        buttons.add(selectButton);
+
+        // 接続部
+        var leftConnectionPartGeometry = new THREE.SphereGeometry(0.5,32,32);
+        var leftConnectionPartMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var leftConnectionPart = new THREE.Mesh(leftConnectionPartGeometry,leftConnectionPartMaterial);
+        leftConnectionPart.scale.set(0.5,0.2,0.2);
+        leftConnectionPart.position.set(-1,0.05,-0.6);
+        leftConnectionPart.castShadow = true;
+        leftConnectionPart.receiveShadow = true;
+        connectionParts.add(leftConnectionPart);
+        var rightConnectionPart = new THREE.Mesh(leftConnectionPartGeometry,leftConnectionPartMaterial);
+        rightConnectionPart.scale.set(leftConnectionPart.scale.x,leftConnectionPart.scale.y,leftConnectionPart.scale.z);
+        rightConnectionPart.position.set(1,0.05,-0.6);
+        rightConnectionPart.castShadow = true;
+        rightConnectionPart.receiveShadow = true;
+        connectionParts.add(rightConnectionPart);
+        var centerConnectionPartGeometry = new THREE.CylinderGeometry(0.3,0.3,1,100);
+        var centerConnectionPartMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var centerConnectionPart = new THREE.Mesh(centerConnectionPartGeometry,centerConnectionPartMaterial);
+        centerConnectionPart.rotation.z = Math.PI / 2;
+        centerConnectionPart.scale.set(0.33,2,0.33);
+        centerConnectionPart.position.set(0,0,0);
+        centerConnectionPart.castShadow = true;
+        centerConnectionPart.receiveShadow = true;
+
+        // 上画面のベース
+        var baseUpperScreenGeometry = new THREE.BoxGeometry(1,1,1);
+        var baseUpperScreenMaterial = new THREE.MeshStandardMaterial({color:0x00ffff});
+        var baseUpperScreen = new THREE.Mesh(baseUpperScreenGeometry,baseUpperScreenMaterial);
+        baseUpperScreen.rotation.x = Math.PI / 4;
+        baseUpperScreen.scale.set(2.5,0.05,1.1);
+        baseUpperScreen.position.set(0,0.44,-0.44);
+        baseUpperScreen.castShadow = true;
+        baseUpperScreen.receiveShadow = true;
+
+        // 上画面の液晶
+        var upperScreenLCDGeometry = new THREE.BoxGeometry(1,1,1);
+        var upperScreenLCDMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+        var upperScreenLCD = new THREE.Mesh(upperScreenLCDGeometry,upperScreenLCDMaterial);
+        upperScreenLCD.rotation.x = Math.PI / 4;
+        upperScreenLCD.scale.set(1.3,0.05,0.9);
+        upperScreenLCD.position.set(0,0.47,-0.45);
+        upperScreenLCD.castShadow = true;
+
+        // スピーカー
+        var speaker1Geometry = new THREE.SphereGeometry(0.5,32,32);
+        var speaker1Material = new THREE.MeshStandardMaterial({color:0x000000});
+        var speaker1 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker1.scale.set(0.05,0.05,0.05);
+        speaker1.position.set(-1.05,0.55,-0.53);
+        speaker1.castShadow = true;
+        speakers.add(speaker1);
+        var speaker2 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker2.scale.set(0.05,0.05,0.05);
+        speaker2.position.set(-0.95,0.55,-0.53);
+        speaker2.castShadow = true;
+        speakers.add(speaker2);
+        var speaker3 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker3.scale.set(0.05,0.05,0.05);
+        speaker3.position.set(-0.85,0.55,-0.53);
+        speaker3.castShadow = true;
+        speakers.add(speaker3);
+        var speaker4 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker4.scale.set(0.05,0.05,0.05);
+        speaker4.position.set(-1.05,0.45,-0.43);
+        speaker4.castShadow = true;
+        speakers.add(speaker4);
+        var speaker5 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker5.scale.set(0.05,0.05,0.05);
+        speaker5.position.set(-0.95,0.45,-0.43);
+        speaker5.castShadow = true;
+        speakers.add(speaker5);
+        var speaker6 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker6.scale.set(0.05,0.05,0.05);
+        speaker6.position.set(-0.85,0.45,-0.43);
+        speaker6.castShadow = true;
+        speakers.add(speaker6);
+        var speaker7 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker7.scale.set(0.05,0.05,0.05);
+        speaker7.position.set(1.05,0.55,-0.53);
+        speaker7.castShadow = true;
+        speakers.add(speaker7);
+        var speaker8 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker8.scale.set(0.05,0.05,0.05);
+        speaker8.position.set(0.95,0.55,-0.53);
+        speaker8.castShadow = true;
+        speakers.add(speaker8);
+        var speaker9 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker9.scale.set(0.05,0.05,0.05);
+        speaker9.position.set(0.85,0.55,-0.53);
+        speaker9.castShadow = true;
+        speakers.add(speaker9);
+        var speaker10 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker10.scale.set(0.05,0.05,0.05);
+        speaker10.position.set(1.05,0.45,-0.43);
+        speaker10.castShadow = true;
+        speakers.add(speaker10);
+        var speaker11 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker11.scale.set(0.05,0.05,0.05);
+        speaker11.position.set(0.95,0.45,-0.43);
+        speaker11.castShadow = true;
+        speakers.add(speaker11);
+        var speaker12 = new THREE.Mesh(speaker1Geometry,speaker1Material);
+        speaker12.scale.set(0.05,0.05,0.05);
+        speaker12.position.set(0.85,0.45,-0.43);
+        speaker12.castShadow = true;
+        speakers.add(speaker12);
+
+        // マイク
+        var micGeometry = new THREE.SphereGeometry(0.5,32,32);
+        var micMaterial = new THREE.MeshStandardMaterial({color:0x000000});
+        var mic = new THREE.Mesh(micGeometry,micMaterial);
+        mic.scale.set(0.05,0.1,0.1);
+        mic.position.set(0,0.05,0.04);
+
+        // 充電バー
+        var leftPowerBarGeometry = new THREE.SphereGeometry(0.5,32,32);
+        var leftPowerBarMaterial = new THREE.MeshPhongMaterial({color:0xff8000});
+        var leftPowerBar = new THREE.Mesh(leftPowerBarGeometry,leftPowerBarMaterial);
+        leftPowerBar.scale.set(0.05,0.13,0.13);
+        leftPowerBar.position.set(1.07,0.08,-0.574);
+        var rightPowerBarGeometry = new THREE.SphereGeometry(0.5,32,32);
+        var rightPowerBarMaterial = new THREE.MeshPhongMaterial({color:0x000000});
+        var rightPowerBar = new THREE.Mesh(rightPowerBarGeometry,rightPowerBarMaterial);
+        rightPowerBar.scale.set(0.05,0.13,0.13);
+        rightPowerBar.position.set(1.13,0.07,-0.582);
+
+        underScreen.add(baseUnderScreen);
+        underScreen.add(underScreenLCD);
+        underScreen.add(arrowKey);
+        underScreen.add(buttons);
+        underScreen.add(connectionParts);
+        underScreen.add(leftPowerBar);
+        underScreen.add(rightPowerBar);
+
+        upperScreen.add(centerConnectionPart);
+        upperScreen.add(baseUpperScreen);
+        upperScreen.add(upperScreenLCD);
+        upperScreen.add(speakers);
+        upperScreen.add(mic);
+
+        all.add(underScreen);
+        all.add(upperScreen);
+
+        all.position.set(0,0.5,0);
+
+        scene.add(all);
+
+        update();
+
+        // 毎フレーム時に実行されるループイベントです
+        function update() {
+          // レンダリング
+          renderer.render(scene, camera);
+          requestAnimationFrame(update);
+
+          switch(a){
+              case 1:
+                  upperScreen.rotation.x += 0.01;
+              break;
+              case -1:
+                  upperScreen.rotation.x -= 0.01;
+              break;
+          }
+          if(upperScreen.rotation.x >= 2.2 || upperScreen.rotation.x <= -1){
+            a *= -1;
+          }
+
+          all.rotation.y += 0.002;
+        }
+      }
+    </script>
+</body>
+</html>

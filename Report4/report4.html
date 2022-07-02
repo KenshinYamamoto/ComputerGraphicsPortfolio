@@ -1,0 +1,177 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+  </head>
+<body>
+  <h1>第4回目レポート</h1>
+  <h2>タイトル:チバニーとバンプマップ読み込み</h2>
+  <p>チバニーの画像を読み込んで反映した。また、バンプマップを様々な図形に反映した。</p>
+
+ <script>
+      // ページの読み込みを待つ
+      window.addEventListener('DOMContentLoaded', init);
+
+      function init() {
+        // サイズを指定
+        const width = 800
+        const height = 600;
+
+        // レンダラーを作成
+        var renderer = new THREE.WebGLRenderer();
+        document.body.appendChild(renderer.domElement);
+        renderer.setSize(width, height);
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(45, width / height);
+        // カメラの初期座標を設定
+        camera.position.set(0, 0, 5);
+
+        // カメラコントローラーを作成
+        const controls = new THREE.OrbitControls(camera, document.body); 
+        
+        // 平行光源1
+        var directionalLight1 = new THREE.DirectionalLight(0xffffff);
+        directionalLight1.position.set(10, 10, 10);
+        // シーンに追加
+        scene.add(directionalLight1);
+        // 平行光源2
+        var directionalLight2 = new THREE.DirectionalLight(0x888888);
+        directionalLight2.position.set(-10, -10, 10);
+        // シーンに追加
+        scene.add(directionalLight2);
+
+        // テクスチャー読み込み
+        var textureLoader = new THREE.TextureLoader();  
+        var texture = textureLoader.load("cit.png");
+        var texture1 = textureLoader.load("stone.jpg");
+        var texture2 = textureLoader.load("chibany.png");
+        var mat = new THREE.MeshPhongMaterial();
+        var mat1 = new THREE.MeshPhongMaterial();
+        var mat2 = new THREE.MeshPhongMaterial();
+        mat.map = texture;
+        mat1.map = texture1;
+        mat2.map = texture2;
+
+        // バンプマップ読込
+        var bump = textureLoader.load("stone-bump.jpg");
+        mat1.bumpMap = bump;
+        mat1.bumpscale = 0.2;
+
+        // 箱を作成
+        var geometry1 = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        var box = new THREE.Mesh(geometry1, mat2);
+        box.position.set(-1.5,0,0); //位置を指定
+        scene.add(box);   // シーンに追加
+
+        // 球を作成
+        var geometry2 = new THREE.SphereGeometry(0.5, 32, 32 ); ;
+        var Sphere = new THREE.Mesh(geometry2, mat2);
+        Sphere.position.set(0,0,0);
+        scene.add(Sphere);
+
+        // 円柱を作成
+        var geometry3 = new THREE.CylinderGeometry( 0.2, 0.5, 0.5, 20, 4 );
+        var Cylinder = new THREE.Mesh(geometry3, mat);
+        Cylinder.position.set(1.5,0,0);
+        scene.add(Cylinder);
+
+        // ドーナツを作成
+        const torusGeometry = new THREE.TorusGeometry( 0.8, 0.1, 100, 100 );
+        const torus = new THREE.Mesh( torusGeometry, mat );
+        torus.position.set(3,0,0);
+        scene.add( torus );
+
+        // トーラスノットを作成
+        var torusKnotGeometry = new THREE.TorusKnotGeometry(0.5,0.1,20,6,3,4);
+        var torusKnot = new THREE.Mesh(torusKnotGeometry,mat);
+        torusKnot.position.set(-3,0,0);
+        scene.add(torusKnot);
+
+
+        // 箱を作成
+        var geometry4 = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        var box1 = new THREE.Mesh(geometry4, mat1);
+        box1.position.set(-1.5,2,0); //位置を指定
+        scene.add(box1);   // シーンに追加
+
+        // 球を作成
+        var geometry5 = new THREE.SphereGeometry(0.5, 32, 32 ); ;
+        var Sphere1 = new THREE.Mesh(geometry5, mat1);
+        Sphere1.position.set(0,2,0);
+        scene.add(Sphere1);
+
+        // 円柱を作成
+        var geometry6 = new THREE.CylinderGeometry( 0.2, 0.5, 0.5, 20, 4 );
+        var Cylinder1 = new THREE.Mesh(geometry6, mat1);
+        Cylinder1.position.set(1.5,2,0);
+        scene.add(Cylinder1);
+
+        // ドーナツを作成
+        const torusGeometry1 = new THREE.TorusGeometry( 0.8, 0.1, 100, 100 );
+        const torus1 = new THREE.Mesh( torusGeometry1, mat1 );
+        torus1.position.set(3,2,0);
+        scene.add( torus1 );
+
+        // トーラスノットを作成
+        var torusKnotGeometry1 = new THREE.TorusKnotGeometry(0.5,0.1,20,6,3,4);
+        var torusKnot1 = new THREE.Mesh(torusKnotGeometry1,mat1);
+        torusKnot1.position.set(-3,2,0);
+        scene.add(torusKnot1);
+
+        update();
+
+        // 毎フレーム時に実行されるループイベントです
+        function update() {
+          // レンダリング
+          renderer.render(scene, camera);
+          requestAnimationFrame(update);
+
+           // 箱を回転させる
+          box.rotation.x += 0.01;
+          box.rotation.y += 0.01;
+
+          // 箱を回転させる
+          Sphere.rotation.x += 0.01;
+          Sphere.rotation.y += 0.01;
+
+          // 円柱を回転させる
+          Cylinder.rotation.x += 0.01;
+          Cylinder.rotation.y += 0.01;
+
+          // ドーナツを回転させる
+          torus.rotation.x += 0.01;
+          torus.rotation.y += 0.01;
+
+          // トーラスノットを回転させる
+          torusKnot.rotation.x += 0.01;
+          torusKnot.rotation.y += 0.01;
+
+          // 箱を回転させる
+          box1.rotation.x += 0.01;
+          box1.rotation.y += 0.01;
+
+          // 箱を回転させる
+          Sphere1.rotation.x += 0.01;
+          Sphere1.rotation.y += 0.01;
+
+          // 円柱を回転させる
+          Cylinder1.rotation.x += 0.01;
+          Cylinder1.rotation.y += 0.01;
+
+          // ドーナツを回転させる
+          torus1.rotation.x += 0.01;
+          torus1.rotation.y += 0.01;
+
+          // トーラスノットを回転させる
+          torusKnot1.rotation.x += 0.01;
+          torusKnot1.rotation.y += 0.01;
+        }
+      }
+    </script>
+</body>
+</html>
